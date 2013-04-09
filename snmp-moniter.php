@@ -38,7 +38,7 @@ class snmp_moniter{
 		return $return;
 	}
 
-	//内存memory
+	//内存memory   (未完成)
 	public function memory(){
 		$memory = array();
 		$memory['total'] = $this->format(snmprealwalk($this->ip, $this->community, '1.3.6.1.2.1.25.2.2.0'));
@@ -66,6 +66,17 @@ class snmp_moniter{
 			}
 		}
 		return $disk;
+	}
+
+
+	//swap(windows中的虚拟内存)
+	public function swap(){
+
+	}
+
+	//进程列表
+	public function run(){
+
 	}
 
 
