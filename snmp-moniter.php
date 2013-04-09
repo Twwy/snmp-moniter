@@ -38,11 +38,42 @@ class snmp_moniter{
 		return $return;
 	}
 
+	//内存memory
+	public function memory(){
+		$memory = array();
+		$memory['total'] = $this->format(snmprealwalk($this->ip, $this->community, '1.3.6.1.2.1.25.2.2.0'));
+		return $memory;
+	}
+
+	//硬盘
+	public function disk(){
+		$disk = array();
+		$result = snmprealwalk($this->ip, $this->community, '1.3.6.1.2.1.25.2');
+		foreach($result as $key => $value){
+			if($label = strstr($key , 'hrStorageDescr')){
+				$label = explode('.', $label);
+				$label = $label[1];
+				if(($name = strstr($value, '/')) || strstr($value, '\\')){
+					if($name === false) $name = $this->format($value);
+					if(($size = $this->format($result["HOST-RESOURCES-MIB::hrStorageSize.{$label}"])) != 0){
+						$disk[] = array(
+							'name' => $name,
+							'total' => $size,
+							'used' => $this->format($result["HOST-RESOURCES-MIB::hrStorageUsed.{$label}"]) 
+						);
+					}
+				}
+			}
+		}
+		return $disk;
+	}
+
 
 	private function format($result){
 		if(!$result) return false;
-		$result = array_shift($result);
+		if(is_array($result)) $result = array_shift($result);
 		$result = str_replace('STRING: ','', $result);
+		$result = str_replace('INTEGER: ','', $result);
 		return $result;
 	}
 
