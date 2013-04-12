@@ -38,10 +38,36 @@ class snmp_moniter{
 		return $return;
 	}
 
-	//内存memory   (未完成)
+	//内存memory
 	public function memory(){
-		$memory = array();
+		$memory = array('total' => false, 'used' => false, 'virtual' => false, 'swap' => false);
 		$memory['total'] = $this->format(snmprealwalk($this->ip, $this->community, '1.3.6.1.2.1.25.2.2.0'));
+		$result = snmprealwalk($this->ip, $this->community, '1.3.6.1.2.1.25.2');
+		//print_r($result);
+		foreach($result as $key => $value){
+			if($label = strstr($key , 'hrStorageDescr')){
+				echo $this->format($value); 
+				$label = explode('.', $label);
+				$label = $label[1];
+				if(strcasecmp($this->format($value), 'Virtual Memory') == 0 && ($size = $this->format($result["HOST-RESOURCES-MIB::hrStorageSize.{$label}"])) != 0){
+					$memory['virtual'] = array(
+						'used' => $this->format($result["HOST-RESOURCES-MIB::hrStorageUsed.{$label}"]),
+						'total' => $size,
+					);
+				}
+				if(strcasecmp($this->format($value), 'Physical Memory') == 0 && ($size = $this->format($result["HOST-RESOURCES-MIB::hrStorageSize.{$label}"])) != 0){	
+					$memory['used'] = $this->format($result["HOST-RESOURCES-MIB::hrStorageUsed.{$label}"]); 
+				}
+				if(strcasecmp($this->format($value), 'Swap space') == 0 && ($size = $this->format($result["HOST-RESOURCES-MIB::hrStorageSize.{$label}"])) != 0){
+					$memory['swap'] = array(
+						'used' => $this->format($result["HOST-RESOURCES-MIB::hrStorageUsed.{$label}"]),
+						'total' => $size
+					);
+
+				}
+
+			}
+		}
 		return $memory;
 	}
 
@@ -84,11 +110,6 @@ class snmp_moniter{
 		return $device;
 	}
 
-	//swap(windows中的虚拟内存)
-	public function swap(){
-
-	}
-
 	//进程列表
 	public function run(){
 		$run = array();
@@ -110,6 +131,18 @@ class snmp_moniter{
 		}
 		return $run;
 	}
+
+	//CPU
+	public function cpu(){
+		$cpu = array();
+		$result = snmprealwalk($this->ip, $this->community, '1.3.6.1.2.1.25.3.3.1.2');
+		foreach($result as $value){
+			$cpu[] = $this->format($value);
+		}
+		return $cpu;	
+	}
+
+
 
 
 	private function format($result){
